@@ -1,0 +1,9 @@
+{
+  "productId": "retro-white",
+  "verified": false,
+  "source": "REPLACE with actual measured product chart source; dimensions below are examples",
+  "sizes": [
+    { "size": "EU 41", "innerLengthMm": 269, "forefootWidthMm": 99 },
+    { "size": "EU 42", "innerLengthMm": 276, "forefootWidthMm": 102 }
+  ]
+}

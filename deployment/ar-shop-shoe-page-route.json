@@ -1,0 +1,15 @@
+{
+  "route": {
+    "name": "Shoe VTO updated page",
+    "description": "Serve the current shoe-vto app only at pokemons.covers.bd/shoe_vto.",
+    "enabled": true,
+    "srcSyntax": "equals",
+    "route": {
+      "src": "/shoe_vto",
+      "dest": "https://shoe-vto.vercel.app/shoe_vto",
+      "has": [{ "type": "host", "value": "pokemons.covers.bd" }],
+      "respectOriginCacheControl": true
+    }
+  },
+  "position": { "placement": "start" }
+}

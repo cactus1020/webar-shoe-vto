@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Unified 3D VTO Engine v2 — Shoe + Eyewear Studio</title>
+  <link rel="stylesheet" href="/src/styles/studio-tailwind.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Hind Siliguri', 'Inter', sans-serif;
+      background-color: #090d16;
+      color: #f1f5f9;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    input[type="range"] { accent-color: #38bdf8; }
+    .glass {
+      background: rgba(15, 23, 42, 0.80);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(56, 189, 248, 0.20);
+    }
+  </style>
+
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Header -->
+  <header class="border-b border-slate-800 bg-slate-950/95 backdrop-blur sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div id="header-icon" class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-sky-500/20 text-lg">
+          👟
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base md:text-lg text-white tracking-tight">Unified 3D WebAR VTO Engine v3.0</h1>
+            <span id="badge-tier" class="text-[11px] mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Interactive preview</span>
+          </div>
+          <p class="text-xs text-slate-400">Dual-Engine Suite: Khronos Scanned Sneaker VTO + 478-Point Designer Eyeglass VTO</p>
+        </div>
+      </div>
+
+      <!-- Primary Category Mode Switcher (Shoe vs Eyeglass) -->
+      <div class="flex items-center bg-slate-900 border border-slate-700/80 rounded-xl p-1 text-xs shadow-inner">
+        <button id="mode-shoe-btn" class="px-3.5 py-1.5 rounded-lg bg-sky-500 text-slate-950 font-bold transition flex items-center gap-1.5">
+          <span>👟</span> <span>Shoe VTO </span>
+        </button>
+        <button id="mode-glass-btn" class="px-3.5 py-1.5 rounded-lg text-slate-300 hover:text-white font-semibold transition flex items-center gap-1.5">
+          <span>🕶️</span> <span>Eyeglass VTO (Designer)</span>
+        </button>
+      </div>
+
+      <!-- Variant Bar & Live AR Trigger -->
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Shoe Colorway Selector -->
+        <div id="shoe-variants-bar" class="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
+          <span class="px-2 text-slate-400 hidden sm:inline">Shoe:</span>
+          <button data-variant="street" class="variant-btn px-2.5 py-1 rounded-md bg-sky-500 text-slate-950 font-semibold transition">Street</button>
+          <button data-variant="midnight" class="variant-btn px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition">Midnight</button>
+          <button data-variant="beach" class="variant-btn px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition">Beach</button>
+        </div>
+
+        <!-- Eyeglass Edition Selector (Hidden initially) -->
+        <div id="glass-variants-bar" class="hidden items-center bg-slate-900 border border-slate-800 rounded-lg p-1 text-xs">
+          <span class="px-2 text-slate-400 hidden sm:inline">Edition:</span>
+          <button data-gstyle="lisa_pink" class="gstyle-btn px-2.5 py-1 rounded-md bg-pink-500 text-slate-950 font-semibold transition">Rose Pink</button>
+          <button data-gstyle="amber_gold" class="gstyle-btn px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition">Amber Star</button>
+          <button data-gstyle="cyber_obsidian" class="gstyle-btn px-2.5 py-1 rounded-md text-slate-300 hover:text-white transition">Obsidian</button>
+        </div>
+
+        <label class="cursor-pointer px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition">
+          📂 Custom .GLB
+          <input id="custom-glb-input" type="file" accept=".glb,.gltf" class="hidden" />
+        </label>
+
+        <button id="webcam-btn" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center gap-1.5">
+          <span>📷</span> <span id="webcam-btn-text">Start Live AR</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="px-4 py-2 text-sm text-sky-300"><a href="/shoe_vto/">← Shoe try-on & calibrated size scan</a><span class="text-slate-400"> · Live foot tracking: Auto → Tap to track → tap foot centre. Colour tracking needs a contrasting floor; scale is estimated.</span></nav>
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 p-4">
+
+    <!-- Left 3D Viewport (8 cols) -->
+    <div class="lg:col-span-8 flex flex-col gap-3">
+      <div id="viewport-container" class="relative w-full h-[540px] md:h-[620px] rounded-2xl overflow-hidden border border-slate-800 bg-gradient-to-b from-slate-900 via-slate-950 to-black shadow-2xl">
+        
+        <!-- Underlying Webcam Video for AR Mode -->
+        <video id="ar-video" playsinline muted class="absolute inset-0 w-full h-full object-cover hidden"></video>
+
+        <!-- Three.js WebGL2 Canvas -->
+        <canvas id="vto-canvas" class="absolute inset-0 w-full h-full block"></canvas>
+
+        <!-- Loading Spinner Overlay -->
+        <div id="loading-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center z-30 transition-opacity duration-300">
+          <div class="w-12 h-12 border-4 border-sky-500/30 border-t-sky-400 rounded-full animate-spin mb-4"></div>
+          <p id="loading-status" class="text-sm font-semibold text-white">Loading Official Khronos Scanned Sneaker + Designer Eyewear Rig...</p>
+          <p class="text-xs text-slate-400 mt-1 mono">Compiling GLSL Fresnel Gradient, Toe-Box Flex & Shadow Catchers</p>
+        </div>
+
+        <!-- Top-Left Telemetry HUD -->
+        <div class="absolute top-3 left-3 z-20 glass rounded-xl p-3 text-xs space-y-1.5 pointer-events-none">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="font-semibold text-white mono" id="hud-fps">60 FPS | WebGL2 PBR</span>
+          </div>
+          <div class="text-slate-300 mono text-[11px]" id="hud-mode">Active Engine: Reference Shoe VTO</div>
+          <div class="text-sky-400 mono text-[11px]" id="hud-shader">Shaders: Metatarsal Toe-Flex + Trouser Mask</div>
+          <div class="text-amber-300 mono text-[11px]" id="hud-pose">Toe Bend: 20.0° | Cuff Overhang: 35%</div>
+        </div>
+
+        <!-- Camera Angle Presets (Bottom Floating Bar) -->
+        <div id="shoe-cam-bar" class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 glass rounded-xl p-1.5 flex items-center gap-1.5 text-xs">
+          <button data-cam="side" class="cam-btn px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 font-medium transition">👟 Side Profile</button>
+          <button data-cam="pov" class="cam-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition">👀 POV Top-Down</button>
+          <button data-cam="mirror" class="cam-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition">🪞 Front Mirror</button>
+          <button data-cam="heel" class="cam-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition">🔍 Heel Occlusion</button>
+        </div>
+
+        <div id="glass-cam-bar" class="hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 glass rounded-xl p-1.5 items-center gap-1.5 text-xs">
+          <button data-gcam="front" class="gcam-btn px-3 py-1.5 rounded-lg bg-pink-500/20 text-pink-300 border border-pink-500/40 font-medium transition">😎 Front Portrait</button>
+          <button data-gcam="quarter" class="gcam-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition">✨ 3/4 Fresnel Glint</button>
+          <button data-gcam="temple" class="gcam-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition">⭐ Temple Hinge & Star</button>
+          <button data-gcam="bridge" class="gcam-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 text-slate-300 transition">👃 Nose Shadow Closeup</button>
+        </div>
+      </div>
+
+      <!-- Quick Engineering Highlights Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+          <div class="text-sky-400 font-semibold mb-0.5">1. Khronos Scanned Shoe</div>
+          <p class="text-slate-400 text-[11px]">Real <span class="mono text-slate-200">MaterialsVariantsShoe.glb</span> with 60% metatarsal flex & trouser cuff occlusion.</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+          <div class="text-pink-400 font-semibold mb-0.5">2. Gradient Fresnel</div>
+          <p class="text-slate-400 text-[11px]">Custom GLSL <span class="mono text-slate-200">IOR 1.523</span> dual-coat lens shader + nose bridge shadow catcher.</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+          <div class="text-emerald-400 font-semibold mb-0.5">3. Dynamic Hinges & PD</div>
+          <p class="text-slate-400 text-[11px]">Temple arms auto-splay ($\pm 10^\circ$) + <span class="mono text-slate-200">11.7mm Iris</span> visual scale estimate; not a measurement.</p>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800">
+          <div class="text-amber-400 font-semibold mb-0.5">4. Webcam Light Probe</div>
+          <p class="text-slate-400 text-[11px]">Samples $16 	imes 16$ live video color temperature to match room lighting automatically.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Control & Diagnostic Panel (4 cols) -->
+    <div class="lg:col-span-4 flex flex-col gap-3">
+
+      <!-- ================= SHOE CONTROLS PANEL ================= -->
+      <div id="shoe-controls-panel" class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <h2 class="font-bold text-sm text-white">👟 Reference Shoe Controls</h2>
+          <span class="text-[11px] mono text-sky-400">Footwear Engine</span>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-medium text-slate-300 flex justify-between">
+            <span>Trial Motion Mode</span>
+            <span class="mono text-sky-400" id="motion-label">Walking Step Flex</span>
+          </label>
+          <div class="grid grid-cols-3 gap-1.5 text-xs">
+            <button data-motion="walk" class="motion-btn py-1.5 rounded-lg bg-sky-500 text-slate-950 font-semibold">Walk Flex</button>
+            <button data-motion="roll" class="motion-btn py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Ankle Roll</button>
+            <button data-motion="manual" class="motion-btn py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Manual</button>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-1">
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Heel Lift & Metatarsal Toe Bend</span>
+              <span id="val-toebend" class="mono text-sky-400">20°</span>
+            </div>
+            <input id="slider-toebend" type="range" min="0" max="42" step="1" value="20" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Baggy Trouser Cuff Overhang</span>
+              <span id="val-trouser" class="mono text-purple-400">35%</span>
+            </div>
+            <input id="slider-trouser" type="range" min="0" max="100" step="1" value="35" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Ankle Pronation / Supination Roll</span>
+              <span id="val-roll" class="mono text-emerald-400">0°</span>
+            </div>
+            <input id="slider-roll" type="range" min="-25" max="25" step="1" value="0" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Floor Contact Shadow Opacity</span>
+              <span id="val-shadow" class="mono text-amber-400">0.55</span>
+            </div>
+            <input id="slider-shadow" type="range" min="0" max="0.9" step="0.05" value="0.55" class="w-full" />
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-slate-800 text-xs">
+          <div class="font-semibold text-slate-200 mb-1">Footwear Render Passes:</div>
+          <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 cursor-pointer">
+            <span>👻 Phantom Leg & Trouser Depth Occluder</span>
+            <input id="toggle-occluder" type="checkbox" checked class="w-4 h-4 accent-sky-500 rounded" />
+          </label>
+          <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 cursor-pointer">
+            <span>👖 Show Visible Denim Trouser & Leg Proxy</span>
+            <input id="toggle-leg-proxy" type="checkbox" class="w-4 h-4 accent-purple-500 rounded" />
+          </label>
+          <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 cursor-pointer">
+            <span>👟👟 Dual-Foot Pair Mode (Left + Right Mirrored)</span>
+            <input id="toggle-dual-foot" type="checkbox" checked class="w-4 h-4 accent-emerald-500 rounded" />
+          </label>
+          <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 cursor-pointer">
+            <span>🎯 9-Keypoint Anatomical Foot Rig Overlay</span>
+            <input id="toggle-keypoints" type="checkbox" checked class="w-4 h-4 accent-amber-500 rounded" />
+          </label>
+        </div>
+      </div>
+
+      <!-- ================= EYEGLASS CONTROLS PANEL ================= -->
+      <div id="glass-controls-panel" class="hidden rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <h2 class="font-bold text-sm text-white">🕶️ Designer Eyeglass Controls</h2>
+          <span class="text-[11px] mono text-pink-400">478-Pt Face + Iris Engine</span>
+        </div>
+
+        <div class="space-y-3 pt-1">
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Lens Gradient & Fresnel Transmission</span>
+              <span id="val-g-trans" class="mono text-pink-400">0.84</span>
+            </div>
+            <input id="slider-g-trans" type="range" min="0.15" max="0.96" step="0.02" value="0.84" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Temple Hinge Splay Angle (ডাঁটির প্রসারণ)</span>
+              <span id="val-g-hinge" class="mono text-emerald-400">4.5°</span>
+            </div>
+            <input id="slider-g-hinge" type="range" min="-2" max="12" step="0.5" value="4.5" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Nose & Cheek Contact Shadow Opacity</span>
+              <span id="val-g-shadow" class="mono text-amber-400">0.32</span>
+            </div>
+            <input id="slider-g-shadow" type="range" min="0.0" max="0.65" step="0.02" value="0.32" class="w-full" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-300">Room Color Temperature (Light Probe K)</span>
+              <span id="val-g-temp" class="mono text-sky-400">5200K</span>
+            </div>
+            <input id="slider-g-temp" type="range" min="2800" max="6500" step="100" value="5200" class="w-full" />
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-2 border-t border-slate-800 text-xs">
+          <div class="font-semibold text-slate-200 mb-1">Designer Photorealism Passes:</div>
+          <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 cursor-pointer">
+            <span>👻 Phantom Head & Ear Depth Occluder</span>
+            <input id="toggle-g-occluder" type="checkbox" checked class="w-4 h-4 accent-pink-500 rounded" />
+          </label>
+          <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 cursor-pointer">
+            <span>🧑 Show Visible Sculpted Face Mannequin</span>
+            <input id="toggle-g-mannequin" type="checkbox" checked class="w-4 h-4 accent-sky-500 rounded" />
+          </label>
+          <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 cursor-pointer">
+            <span>🔄 Auto Head Turn (Fresnel Glint Demo)</span>
+            <input id="toggle-g-autoturn" type="checkbox" checked class="w-4 h-4 accent-emerald-500 rounded" />
+          </label>
+          <label class="flex items-center justify-between p-2 rounded-lg bg-slate-950/70 border border-slate-800/80 cursor-pointer">
+            <span>👁️ Show Illustrative Face Landmarks</span>
+            <input id="toggle-g-landmarks" type="checkbox" checked class="w-4 h-4 accent-amber-500 rounded" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Shared 1-Euro Filter & Status Card -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 space-y-3">
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-300 font-medium">1-Euro Filter Adaptive Beta (β)</span>
+            <span id="val-beta" class="mono text-sky-400">0.08</span>
+          </div>
+          <input id="slider-beta" type="range" min="0.01" max="0.40" step="0.01" value="0.08" class="w-full" />
+        </div>
+        <div class="p-3 rounded-xl bg-slate-950 border border-slate-800/90 text-[11px] space-y-1">
+          <div class="font-semibold text-emerald-400">Interactive VTO Preview</div>
+          <p class="text-slate-300 leading-relaxed">
+            উপরে <strong>Shoe VTO </strong> এবং <strong>Eyeglass VTO (Designer)</strong> বাটনে ক্লিক করে দুটি ইঞ্জিনই এক ফাইল থেকে টেস্ট করতে পারবে। Live AR অন করলে বর্তমান মোড অনুযায়ী স্বয়ংক্রিয়ভাবে <strong>Trained FootNet (Foot)</strong> অথবা <strong>FaceLandmarker (478-Pt Face + Iris)</strong> চালু হবে।
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+  </main><footer class="p-4 text-xs text-slate-400">Shoe model © 2021 Shopify · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> via Khronos glTF Sample Assets. Display normalization, mirroring and toe deformation applied. Eyewear is a procedural concept, not a branded product.</footer>
+
+  <script type="module" src="/src/studio.js"></script>
+</body>
+</html>

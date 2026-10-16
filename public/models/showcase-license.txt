@@ -1,0 +1,5 @@
+Materials Variants Shoe — Copyright 2021 Shopify.
+Creative Commons Attribution 4.0 International:
+https://creativecommons.org/licenses/by/4.0/
+Source: https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/MaterialsVariantsShoe
+The application normalizes and mirrors the model for display. Studio mode also deforms the toe.

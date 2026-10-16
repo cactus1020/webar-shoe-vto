@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WebAR Foot Measurement Record",
+  "description": "One calibrated capture. Keep all frames from one person under one subject_id so splits do not leak identities.",
+  "type": "object",
+  "required": [
+    "capture_id",
+    "subject_id",
+    "image_path",
+    "capture_view",
+    "marker",
+    "landmarks",
+    "ground_truth"
+  ],
+  "properties": {
+    "capture_id": { "type": "string" },
+    "subject_id": { "type": "string" },
+    "image_path": { "type": "string" },
+    "capture_view": { "enum": ["top", "medial_45", "lateral_45"] },
+    "foot_side": { "enum": ["left", "right"] },
+    "marker": {
+      "type": "object",
+      "required": ["physical_length_mm", "corners_px"],
+      "properties": {
+        "physical_length_mm": { "type": "number", "minimum": 50 },
+        "corners_px": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["x", "y"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "landmarks": {
+      "type": "object",
+      "required": ["heel", "toe_tip", "forefoot_medial", "forefoot_lateral"],
+      "properties": {
+        "heel": { "$ref": "#/$defs/point" },
+        "toe_tip": { "$ref": "#/$defs/point" },
+        "forefoot_medial": { "$ref": "#/$defs/point" },
+        "forefoot_lateral": { "$ref": "#/$defs/point" },
+        "ankle_medial": { "$ref": "#/$defs/point" },
+        "ankle_lateral": { "$ref": "#/$defs/point" },
+        "navicular": { "$ref": "#/$defs/point" },
+        "fifth_metatarsal": { "$ref": "#/$defs/point" }
+      }
+    },
+    "ground_truth": {
+      "type": "object",
+      "required": ["length_mm", "forefoot_width_mm", "measurement_method"],
+      "properties": {
+        "length_mm": { "type": "number", "minimum": 180, "maximum": 340 },
+        "forefoot_width_mm": { "type": "number", "minimum": 60, "maximum": 150 },
+        "measurement_method": { "enum": ["3d_scan", "brannock", "caliper"] }
+      }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "required": ["x", "y", "visibility"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 },
+        "visibility": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

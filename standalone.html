@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0c14" />
+  <title>WebAR Shoe Virtual Try-On (Standalone CDN)</title>
+  <style>
+    :root {
+      --primary-glow: #00f2fe;
+      --accent-green: #00f076;
+      --bg-dark: #0a0c14;
+      --card-bg: rgba(18, 22, 34, 0.72);
+      --card-border: rgba(255, 255, 255, 0.12);
+      --text-main: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.65);
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background-color: var(--bg-dark); color: var(--text-main); font-family: var(--font-family); position: fixed; }
+    #app-container { position: relative; width: 100%; height: 100%; overflow: hidden; background: radial-gradient(circle at center, #151828 0%, #08090f 100%); }
+    #camera-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+    #camera-video.mirrored { transform: scaleX(-1); }
+    #webgl-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; pointer-events: none; }
+    #ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; padding: env(safe-area-inset-top, 16px) env(safe-area-inset-right, 16px) env(safe-area-inset-bottom, 16px) env(safe-area-inset-left, 16px); }
+    .interactive { pointer-events: auto; }
+    .glass-panel { background: var(--card-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--card-border); border-radius: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45); }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; margin: 8px 8px 0 8px; }
+    .brand-section { display: flex; align-items: center; gap: 10px; }
+    .brand-icon { width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .brand-title { font-size: 15px; font-weight: 700; text-transform: uppercase; }
+    .ar-badge { font-size: 10px; font-weight: 800; background: rgba(0, 242, 254, 0.15); color: var(--primary-glow); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(0, 242, 254, 0.3); }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+    .icon-btn { width: 40px; height: 40px; border-radius: 12px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .icon-btn.active { background: rgba(0, 242, 254, 0.2); border-color: var(--primary-glow); color: var(--primary-glow); }
+    .icon-btn svg { width: 20px; height: 20px; fill: currentColor; }
+    .tracking-hud { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 10px; }
+    .status-pill { display: flex; align-items: center; gap: 8px; padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: 30px; background: rgba(10, 12, 20, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff5555; }
+    .status-dot.active { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+    .guidance-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; transition: opacity 0.5s ease; z-index: 5; }
+    .guidance-container.faded { opacity: 0.15; }
+    .guidance-box { width: 240px; height: 280px; border: 2px dashed rgba(0, 242, 254, 0.4); border-radius: 28px; }
+    .guidance-text { margin-top: 16px; padding: 8px 16px; border-radius: 20px; background: rgba(10, 12, 20, 0.75); border: 1px solid rgba(255, 255, 255, 0.1); font-size: 13px; font-weight: 600; }
+    .bottom-shelf { display: flex; flex-direction: column; gap: 12px; margin: 0 8px 8px 8px; z-index: 12; }
+    .shoe-meta-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; }
+    .shoe-name { font-size: 16px; font-weight: 800; }
+    .shoe-tagline { font-size: 12px; color: var(--text-muted); }
+    .shoe-price-tag { font-size: 15px; font-weight: 800; color: var(--primary-glow); }
+    .carousel-container { width: 100%; overflow-x: auto; scrollbar-width: none; }
+    .carousel-container::-webkit-scrollbar { display: none; }
+    .carousel-track { display: flex; gap: 12px; padding: 4px; }
+    .shoe-card { flex: 0 0 110px; height: 110px; border-radius: 18px; background: var(--card-bg); backdrop-filter: blur(16px); border: 1.5px solid var(--card-border); display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 10px 8px; cursor: pointer; }
+    .shoe-card.active { border-color: var(--primary-glow); box-shadow: 0 0 20px rgba(0, 242, 254, 0.35); }
+    .action-toolbar { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .capture-btn { width: 60px; height: 60px; border-radius: 50%; background: #ffffff; border: 4px solid rgba(255, 255, 255, 0.35); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .capture-btn-inner { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); }
+    #loader-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0a0c14; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; transition: opacity 0.5s ease; }
+    #loader-overlay.hidden { opacity: 0; pointer-events: none; }
+    .spinner { width: 44px; height: 44px; border: 4px solid rgba(0, 242, 254, 0.2); border-top-color: var(--primary-glow); border-radius: 50%; animation: spin 1s infinite linear; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!-- Import Maps for Standalone Browser ES Modules -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/examples/jsm/loaders/GLTFLoader.js": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js",
+      "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app-container">
+    <video id="camera-video" playsinline webkit-playsinline autoplay muted></video>
+    <canvas id="webgl-canvas"></canvas>
+
+    <div id="loader-overlay">
+      <div class="spinner"></div>
+      <div id="loader-text">Loading WebAR Virtual Try-On...</div>
+    </div>
+
+    <div id="ui-overlay">
+      <div class="top-bar glass-panel interactive">
+        <div class="brand-section">
+          <div class="brand-icon">👟</div>
+          <div>
+            <div class="brand-title">KIX VTO</div>
+            <div class="ar-badge">WEBAR 3D</div>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="btn-toggle-occluder" class="icon-btn" title="Toggle Leg Depth Occluder">
+            <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+          </button>
+          <button id="btn-flip-camera" class="icon-btn" title="Flip Camera">
+            <svg viewBox="0 0 24 24"><path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="tracking-hud">
+        <div class="status-pill"><div id="left-foot-dot" class="status-dot"></div><span>Left</span></div>
+        <div class="status-pill"><div id="right-foot-dot" class="status-dot"></div><span>Right</span></div>
+        <div class="status-pill"><span id="fps-value">60 FPS</span></div>
+      </div>
+
+      <div id="guidance-container" class="guidance-container">
+        <div class="guidance-box"></div>
+        <div class="guidance-text">Step back & aim at feet</div>
+      </div>
+
+      <div class="bottom-shelf">
+        <div class="shoe-meta-bar glass-panel interactive">
+          <div>
+            <div id="shoe-name" class="shoe-name">Cyberpunk Neon</div>
+            <div id="shoe-tagline" class="shoe-tagline">Futuristic Glow Edition</div>
+          </div>
+          <div id="shoe-price" class="shoe-price-tag">$240</div>
+        </div>
+
+        <div class="carousel-container">
+          <div id="carousel-track" class="carousel-track interactive"></div>
+        </div>
+
+        <div class="action-toolbar interactive">
+          <button id="btn-capture" class="capture-btn"><div class="capture-btn-inner"></div></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { FilesetResolver, PoseLandmarker } from '@mediapipe/tasks-vision';
+    import { CameraManager } from './src/core/CameraManager.js';
+    import { ThreeScene } from './src/core/ThreeScene.js';
+    import { FootTracker } from './src/tracking/FootTracker.js';
+    import { OcclusionManager } from './src/tracking/OcclusionManager.js';
+    import { ShoeManager } from './src/models/ShoeManager.js';
+    import { UIManager } from './src/ui/UIManager.js';
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const loader = document.getElementById('loader-overlay');
+      const loaderText = document.getElementById('loader-text');
+      const video = document.getElementById('camera-video');
+      const canvas = document.getElementById('webgl-canvas');
+
+      try {
+        const threeScene = new ThreeScene();
+        threeScene.init(canvas);
+
+        const footTracker = new FootTracker(threeScene);
+        const occlusionManager = new OcclusionManager(threeScene);
+        const shoeManager = new ShoeManager(threeScene);
+        const ui = new UIManager().init();
+
+        ui.on('selectStyle', (id) => {
+          const s = shoeManager.loadStyle(id);
+          if (s) ui.updateShoeInfo(s.name, s.tagline, s.price);
+        });
+
+        ui.on('toggleOccluder', () => occlusionManager.toggleDebug());
+
+        loaderText.textContent = 'Loading MediaPipe AI Vision...';
+        const vision = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+        const landmarker = await PoseLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+            delegate: 'GPU'
+          },
+          runningMode: 'VIDEO',
+          numPoses: 1
+        });
+
+        loaderText.textContent = 'Starting Camera...';
+        const cameraManager = new CameraManager();
+        await cameraManager.init(video);
+
+        ui.on('flipCamera', () => cameraManager.flipCamera());
+
+        const handleResize = () => {
+          threeScene.updateSize(window.innerWidth, window.innerHeight, video.videoWidth, video.videoHeight);
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+
+        loader.classList.add('hidden');
+
+        // Loop
+        const loop = (timestamp) => {
+          if (video.readyState >= 2) {
+            const results = landmarker.detectForVideo(video, timestamp);
+            if (results && results.landmarks && results.landmarks.length > 0) {
+              const feet = footTracker.update(results.landmarks[0], results.worldLandmarks ? results.worldLandmarks[0] : null, threeScene.aspectRatio, threeScene.fov);
+              occlusionManager.update(feet.left, feet.right);
+              shoeManager.update(feet.left, feet.right);
+              ui.updateHUD(feet.left, feet.right);
+            } else {
+              const feet = footTracker.update(null, null, threeScene.aspectRatio, threeScene.fov);
+              occlusionManager.update(feet.left, feet.right);
+              shoeManager.update(feet.left, feet.right);
+              ui.updateHUD(feet.left, feet.right);
+            }
+          }
+          threeScene.render();
+          requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+
+      } catch (err) {
+        console.error(err);
+        loaderText.textContent = 'Error: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

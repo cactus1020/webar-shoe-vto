@@ -1,0 +1,11 @@
+{
+  "id": "cmu-pilot-20261005-1601",
+  "file": "footnet-cmu-20261005-1601.onnx",
+  "trainedAt": "2026-10-05T10:01:20.172463+00:00",
+  "stage": "Public-data pilot",
+  "trainImages": 400,
+  "epochs": 20,
+  "poseMap50": 0.6771880169824047,
+  "metricSizingValidated": false,
+  "sha256": "30a2680c28d6231c0f1f218158b9763e185ba882ac72bfc67b207fce8dfc50de"
+}

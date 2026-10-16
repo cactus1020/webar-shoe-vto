@@ -1,0 +1,15 @@
+{
+  "route": {
+    "name": "Shoe VTO updated assets",
+    "description": "Proxy only shoe_vto assets on pokemons.covers.bd to the same current app.",
+    "enabled": true,
+    "srcSyntax": "regex",
+    "route": {
+      "src": "^/shoe_vto/(.*)$",
+      "dest": "https://shoe-vto.vercel.app/shoe_vto/$1",
+      "has": [{ "type": "host", "value": "pokemons.covers.bd" }],
+      "respectOriginCacheControl": true
+    }
+  },
+  "position": { "placement": "start" }
+}

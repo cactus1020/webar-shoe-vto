@@ -1,0 +1,11 @@
+training/
+node_modules/
+dist/
+.codex-vite-dev*
+test_*.js
+scratch_left.jpg
+annotated_detection.jpg
+WebAR_FootNet_BUET_Research_Proposal.md
+
+backups/
+scripts/
