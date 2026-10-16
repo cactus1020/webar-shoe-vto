@@ -451,7 +451,7 @@ def create_report():
         "known motion paths with camera angles between 25° and 80° at distances of 0.8 to 2.2 meters. The estimated 6-DoF poses "
         "were compared directly against known mathematical ground truth. Performance was tested on four devices: (a) iPhone 13 (Safari), "
         "(b) Google Pixel 7 (Chrome), (c) Samsung Galaxy A52 (mid-range Android), and (d) Windows 11 laptop with a 720p webcam. "
-        "In addition, foot length and width measurements were taken from 30 volunteers using Brannock devices and calipers to verify sizing accuracy."
+        "In addition, foot length and width measurements were taken from 30 volunteers using precision digital calipers and metric ground-truth calibration scales to verify sizing accuracy."
     )
     add_para(
         "Quantitative Design Targets. The target engineering specifications are: (i) sustained frame rate of at least 50 FPS on modern phones "
@@ -467,8 +467,9 @@ def create_report():
     add_heading("5. Cost Estimation")
     add_para(
         "WebAR-Fit eliminates server compute costs because all AI models and 3D rendering run directly on the user device via "
-        "WebAssembly SIMD and WebGL. Server GPU cost is BDT 0. The system uses open-source libraries: Three.js, ONNX Runtime Web, "
-        "Vite, Node.js, and Google MediaPipe. Table 2 details the prototype development and physical testing budget in Dhaka."
+        "WebAssembly SIMD and WebGL. Server GPU compute cost is BDT 0. The core client engine uses open-source libraries: Three.js, "
+        "ONNX Runtime Web, Vite, Node.js, and Google MediaPipe. In addition, Anthropic Claude Pro was utilized for AI-assisted code "
+        "generation, WebGL shader optimization, and DSP pipeline architecture design. Table 2 details the streamlined implementation budget in Dhaka."
     )
 
     table2 = doc.add_table(rows=1, cols=5)
@@ -493,21 +494,19 @@ def create_report():
     bom_items = [
         ("1", "Vercel Edge Network / Global CDN Hosting (Static WebAssembly & Model Hosting)", "12 mos", "0 (Free Tier)", "0"),
         ("2", "SSL/TLS Wildcard Certificate & Custom Domain (pokemons.covers.bd)", "1 yr", "1,200", "1,200"),
-        ("3", "Standard Brannock Foot Measuring Device (Ground-Truth Sizing Calibration)", "1 unit", "3,500", "3,500"),
+        ("3", "Anthropic Claude Pro Subscription (AI Code Generation, Shader Optimization & DSP Pipeline Architecture)", "2 mos", "2,500", "5,000"),
         ("4", "Digital Vernier Caliper (150 mm stainless steel, metric precision +/-0.02 mm)", "1 unit", "1,150", "1,150"),
-        ("5", "Multi-Surface Calibration Testbed Mats (Ceramic, Hardwood Vinyl, Carpet)", "3 mats", "650", "1,950"),
-        ("6", "Adjustable Mobile Device Floor-Mount Rig (40 to 90 degree validation)", "1 unit", "1,400", "1,400"),
-        ("7", "Photorealistic 3D Sneaker Assets & PBR Texture Scanning (Khronos CC-BY)", "1 set", "0 (Open Source)", "0"),
-        ("8", "Lux Light Meter for ambient illuminance threshold benchmarking", "1 unit", "1,800", "1,800"),
-        ("9", "Consumables, Reference Calibration Cards (A4 ISO 216 targets, markers)", "1 set", "500", "500"),
-        ("10", "Subtotal", "", "", "11,500"),
-        ("11", "Contingency & Emergency Re-calibration Fund @ 10%", "", "", "1,150"),
-        ("12", "TOTAL IMPLEMENTATION BUDGET", "", "", "12,650")
+        ("5", "Adjustable Mobile Device Tripod Mount (Floor elevation angle & tilt validation)", "1 unit", "850", "850"),
+        ("6", "Photorealistic 3D Sneaker Assets & PBR Texture Scanning (Khronos CC-BY 4.0)", "1 set", "0 (Open Source)", "0"),
+        ("7", "Consumables & Reference Calibration Cards (A4 ISO 216 targets, markers)", "1 set", "500", "500"),
+        ("8", "Subtotal", "", "", "8,700"),
+        ("9", "Contingency & Development Buffer @ 10%", "", "", "870"),
+        ("10", "TOTAL IMPLEMENTATION BUDGET", "", "", "9,570")
     ]
 
     for stage_idx, (num, comp, qty, unit_p, tot_p) in enumerate(bom_items):
         row = table2.add_row()
-        is_total = num in ["10", "11", "12"]
+        is_total = num in ["8", "9", "10"]
         bg = "EBF0F8" if is_total else ("F8F9FB" if stage_idx % 2 == 1 else "FFFFFF")
         for i, text in enumerate([num, comp, qty, unit_p, tot_p]):
             cell = row.cells[i]
@@ -536,7 +535,7 @@ def create_report():
     add_para(
         "Commercial Comparison: Proprietary enterprise virtual try-on software (such as Wannaby or Snapchat CameraKit) charges "
         "between $1,500 and $5,000 per month (approximately BDT 1,80,000 to BDT 6,00,000 per month) plus per-scan fees. In contrast, "
-        "WebAR-Fit provides comparable precision and photorealism at a one-time physical testing cost of BDT 12,650 and zero ongoing cloud compute expenses."
+        "WebAR-Fit provides comparable precision and photorealism at a total development budget of BDT 9,570 and zero ongoing cloud compute expenses."
     )
 
     # =========================================================================
