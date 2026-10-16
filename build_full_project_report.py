@@ -255,7 +255,7 @@ def create_report():
     p_subby = doc.add_paragraph()
     p_subby.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p_subby.paragraph_format.space_after = Pt(0)
-    r = p_subby.add_run("Abrar Shahriar\nStudent ID: 2206078\nSection: B1\nDepartment of Electrical and Electronic Engineering\nBangladesh University of Engineering & Technology")
+    r = p_subby.add_run("Md. Shafitul Hasan Ovi\nStudent ID: 2206124\nSection: B2\nDepartment of Electrical and Electronic Engineering\nBangladesh University of Engineering & Technology")
     r.font.size = Pt(12)
     r.font.name = 'Times New Roman'
 
